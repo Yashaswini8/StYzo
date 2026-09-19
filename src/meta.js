@@ -221,14 +221,19 @@ async function safeSend(to, body) {
   }
 }
 
-// Express route handler. ACK Meta instantly with HTTP 200, then process in the
-// background so slow work (image downloads + Gemini calls) never makes Meta
-// retry the webhook.
-function handleMetaIncoming(req, res) {
-  res.status(200).send('EVENT_RECEIVED');
-  processMetaWebhook(req.body).catch((err) => {
+// Express route handler. On serverless hosts (Vercel) a background promise is
+// frozen the moment the response is flushed, which would kill the Gemini work
+// and the outbound reply. So we finish processing first, THEN acknowledge
+// Meta — the reply is always sent. Slow (Gemini) work makes Meta wait a few
+// seconds; a 200 is still returned either way so Meta never retries.
+async function handleMetaIncoming(req, res) {
+  const timeout = new Promise((resolve) => setTimeout(resolve, 55000));
+  try {
+    await Promise.race([processMetaWebhook(req.body), timeout]);
+  } catch (err) {
     console.error('Meta webhook processing failed:', err.message);
-  });
+  }
+  res.status(200).send('EVENT_RECEIVED');
 }
 
 module.exports = { handleMetaIncoming, sendMetaWhatsApp, normaliseMessage };
