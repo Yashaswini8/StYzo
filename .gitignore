@@ -27,3 +27,6 @@ test-photo.jpg
 # Vercel CLI
 .vercel/
 .vercel
+
+# stray raw demo source (deployed copy lives in public/videos/)
+StYzo demo final.mp4

@@ -61,6 +61,9 @@ app.get('/demo', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'styzo-prototype.html'));
 });
 
+// ---- Demo video (public/videos, supports Range requests for streaming) ----
+app.use('/videos', express.static(path.join(__dirname, '..', 'public', 'videos')));
+
 // Only start listening when this file is run directly (e.g. `npm start`),
 // so the app can be imported by tests without binding a port.
 if (require.main === module) {
