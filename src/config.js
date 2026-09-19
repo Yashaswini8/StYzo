@@ -9,6 +9,7 @@ function parseFloatOr(name, fallback) {
 
 module.exports = {
   port: parseFloatOr('PORT', 3000),
+  verifyToken: process.env.VERIFY_TOKEN || '',
   meta: {
     phoneNumberId: process.env.META_PHONE_NUMBER_ID || '',
     accessToken: process.env.META_ACCESS_TOKEN || '',

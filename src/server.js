@@ -8,7 +8,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const { port } = require('./config');
+const { port, verifyToken } = require('./config');
 const { handleMetaIncoming } = require('./meta');
 
 const app = express();
@@ -44,7 +44,7 @@ app.get('/webhook', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  if (mode === 'subscribe' && token === 'hackathon2026verify') {
+  if (mode === 'subscribe' && verifyToken && token === verifyToken) {
     res.status(200).send(challenge);
   } else {
     res.status(403).send('Forbidden');

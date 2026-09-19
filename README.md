@@ -100,8 +100,13 @@ Then in the Meta app dashboard → WhatsApp → **API Setup → Edit webhook
 subscription**:
 
 - **Callback URL:** `https://<your-ngrok-or-deployed-url>/webhook`
-- **Verify token:** `hackathon2026verify`
+- **Verify token:** `<choose-your-own-verify-token>`
 - Subscribe to the **`messages`** field.
+
+> **Security note:** the verify token is a **private secret** you set yourself — pick
+> any value, put the same value in `VERIFY_TOKEN` in your environment, and enter it
+> in your own Meta webhook settings. Do **not** reuse or share the token from any
+> example, and never commit the real one to the repo.
 
 ---
 
@@ -111,6 +116,7 @@ subscription**:
 | --- | --- | --- |
 | `META_PHONE_NUMBER_ID` | yes | Graph node id of your WhatsApp Business number |
 | `META_ACCESS_TOKEN` | yes | Meta access token (temporary or system-user) |
+| `VERIFY_TOKEN` | yes | Your own webhook verify token (must match Meta's webhook config) |
 | `GEMINI_API_KEY` | yes | Google AI Studio key for listing generation |
 | `GEMINI_MODEL` | no | Defaults to `gemini-3.6-flash` (fallbacks: `gemini-3-flash-preview`, `gemini-3.5-flash`) |
 | `BASE_PRICE` | no | Base nightly rate (default 100) |
