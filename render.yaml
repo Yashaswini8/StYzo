@@ -1,0 +1,36 @@
+# Render Blueprint — auto-provisions the web service when you connect
+# this repository to Render (New -> Blueprint) or via the dashboard.
+#
+# The `sync: false` env vars are prompted for at deploy time — fill them
+# in with your real Twilio / Gemini credentials.
+services:
+  - type: web
+    name: styzo
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: PORT
+        value: 3000
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+      - key: BASE_PRICE
+        value: 100
+      - key: WEEKEND_SURCHARGE
+        value: 25
+      - key: PRICING_CURRENCY
+        value: USD
+      - key: DEFAULT_CITY
+        value: Barcelona

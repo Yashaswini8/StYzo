@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StyZo — Host Growth Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest-900:#122A1F;
+    --forest-800:#173626;
+    --forest-700:#22523A;
+    --forest-500:#3C7E5B;
+    --sage-200:#DCE7DC;
+    --paper:#F5F6F2;
+    --paper-raise:#FFFFFF;
+    --ink:#16201A;
+    --ink-soft:#4B584F;
+    --line:#D9DFD6;
+    --gold:#B8863A;
+    --gold-soft:#F2E4C7;
+    --coral:#B4553F;
+    --coral-soft:#F4E2DC;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    --shadow:0 1px 2px rgba(18,42,31,0.06), 0 10px 30px -12px rgba(18,42,31,0.18);
+    color-scheme: light;
+  }
+  :root:not([data-theme="light"]) {
+    /* published preview honors system dark mode, but this UI is a phone-chat
+       mockup that reads best on its own light paper — pin it deliberately */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(60,126,91,0.10), transparent 40%),
+      radial-gradient(circle at 92% 18%, rgba(184,134,58,0.10), transparent 38%);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', Georgia, serif; }
+
+  a{color:inherit;}
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:36px 24px 64px;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    width:40px;height:40px;border-radius:11px;
+    background:linear-gradient(155deg, var(--forest-700), var(--forest-900));
+    display:flex;align-items:center;justify-content:center;
+    color:var(--sage-200);
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:19px;
+    box-shadow:var(--shadow);
+  }
+  .brand-text h1{
+    font-size:22px;
+    margin:0;
+    font-weight:600;
+    letter-spacing:0.2px;
+  }
+  .brand-text p{
+    margin:1px 0 0;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .proto-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:var(--paper-raise);
+    border:1px solid var(--line);
+    border-radius:99px;
+    padding:7px 14px 7px 11px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    box-shadow:var(--shadow);
+  }
+  .proto-chip .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--gold);
+    flex:none;
+  }
+
+  /* ---------- hero line ---------- */
+  .hero-line{
+    display:flex;
+    gap:28px;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+  .hero-line h2{
+    font-size:clamp(26px, 3.4vw, 38px);
+    line-height:1.12;
+    font-weight:500;
+    margin:0;
+    max-width:640px;
+  }
+  .hero-line h2 em{
+    font-style:normal;
+    color:var(--forest-700);
+  }
+  .hero-sub{
+    max-width:300px;
+    font-size:14px;
+    color:var(--ink-soft);
+    line-height:1.55;
+    margin:0;
+  }
+
+  /* ---------- main grid ---------- */
+  .stage{
+    display:grid;
+    grid-template-columns:minmax(320px, 400px) 1fr;
+    gap:26px;
+    align-items:start;
+  }
+  @media (max-width: 900px){
+    .stage{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- phone / chat ---------- */
+  .phone{
+    background:var(--forest-900);
+    border-radius:34px;
+    padding:12px;
+    box-shadow:var(--shadow);
+  }
+  .phone-screen{
+    background:#ECF3EC;
+    border-radius:24px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    height:640px;
+  }
+  .chat-head{
+    background:var(--forest-800);
+    color:#EAF1EA;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    flex:none;
+  }
+  .chat-avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(155deg, var(--gold), #8C6425);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:14px;
+    color:#241a08;
+    flex:none;
+  }
+  .chat-head-text b{ display:block; font-size:14.5px; font-weight:600; }
+  .chat-head-text span{ display:block; font-size:11.5px; color:#B9CBBF; margin-top:1px; }
+
+  .chat-log{
+    flex:1;
+    overflow-y:auto;
+    padding:16px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background-image: radial-gradient(rgba(18,42,31,0.045) 1px, transparent 1px);
+    background-size:14px 14px;
+  }
+  .bubble-row{ display:flex; }
+  .bubble-row.bot{ justify-content:flex-start; }
+  .bubble-row.user{ justify-content:flex-end; }
+  .bubble{
+    max-width:82%;
+    padding:9px 12px;
+    border-radius:14px;
+    font-size:13.6px;
+    line-height:1.5;
+    box-shadow:0 1px 1px rgba(18,42,31,0.06);
+    white-space:pre-wrap;
+  }
+  .bubble.bot{
+    background:var(--paper-raise);
+    color:var(--ink);
+    border-bottom-left-radius:4px;
+  }
+  .bubble.user{
+    background:var(--forest-500);
+    color:#F4FBF4;
+    border-bottom-right-radius:4px;
+  }
+  .bubble .b-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:14.5px;
+    margin:0 0 3px;
+    color:var(--forest-800);
+  }
+  .bubble.user .b-title{ color:#eafff0; }
+  .bubble .flags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:7px;
+  }
+  .flag{
+    font-size:11px;
+    padding:3px 8px;
+    border-radius:99px;
+    background:var(--gold-soft);
+    color:#6b4b16;
+    border:1px solid #e4cd97;
+  }
+  .flag.warn{ background:var(--coral-soft); color:#7c3320; border-color:#e3b6a8; }
+  .rate-cards{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+  .rate-card{
+    background:var(--sage-200);
+    border-radius:10px;
+    padding:8px 10px;
+    min-width:84px;
+  }
+  .rate-card.suggested{ background:var(--gold-soft); }
+  .rate-card .rlabel{ font-size:10px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); }
+  .rate-card .rval{ font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin-top:1px; }
+
+  .typing{
+    display:flex; gap:4px; padding:10px 13px;
+    background:var(--paper-raise); border-radius:14px; border-bottom-left-radius:4px;
+    width:fit-content;
+  }
+  .typing span{
+    width:6px;height:6px;border-radius:50%;background:#a9b7ac;
+    animation:tbounce 1.1s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){ animation-delay:0.15s; }
+  .typing span:nth-child(3){ animation-delay:0.3s; }
+  @keyframes tbounce{
+    0%,60%,100%{ transform:translateY(0); opacity:0.5; }
+    30%{ transform:translateY(-4px); opacity:1; }
+  }
+
+  .quick-row{
+    display:flex;
+    gap:7px;
+    padding:9px 10px;
+    flex-wrap:wrap;
+    flex:none;
+    border-top:1px solid #dfe6dd;
+    background:#F2F6F1;
+  }
+  .quick-btn{
+    font-size:12px;
+    background:var(--paper-raise);
+    border:1px solid var(--line);
+    color:var(--forest-800);
+    padding:6px 11px;
+    border-radius:99px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:transform .12s ease, border-color .12s ease;
+  }
+  .quick-btn:hover{ border-color:var(--forest-500); transform:translateY(-1px); }
+  .quick-btn:disabled{ opacity:0.45; cursor:default; transform:none; }
+
+  .chat-input{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:10px;
+    background:var(--paper-raise);
+    flex:none;
+  }
+  .chat-input input{
+    flex:1;
+    border:1px solid var(--line);
+    background:#F5F6F2;
+    border-radius:99px;
+    padding:10px 15px;
+    font-size:13.5px;
+    font-family:inherit;
+    color:var(--ink);
+    outline:none;
+  }
+  .chat-input input:focus{ border-color:var(--forest-500); }
+  .send-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--forest-700);
+    border:none;
+    color:#eafff0;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex:none;
+  }
+  .send-btn:hover{ background:var(--forest-800); }
+  .send-btn:disabled{ opacity:0.4; cursor:default; }
+
+  /* ---------- inline forms in bubbles ---------- */
+  .mini-form{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    margin-top:2px;
+  }
+  .mini-form label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--ink-soft);
+    margin-bottom:-3px;
+  }
+  .mini-form input, .mini-form select, .mini-form textarea{
+    font-family:inherit;
+    font-size:13px;
+    padding:7px 9px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    width:100%;
+  }
+  .mini-form textarea{ resize:vertical; min-height:46px; }
+  .mini-form .row2{ display:flex; gap:7px; }
+  .mini-form .row2 > div{ flex:1; }
+  .mini-form-submit{
+    align-self:flex-start;
+    margin-top:3px;
+    background:var(--forest-700);
+    color:#eafff0;
+    border:none;
+    padding:7px 14px;
+    border-radius:99px;
+    font-size:12.5px;
+    font-family:inherit;
+    cursor:pointer;
+  }
+  .mini-form-submit:disabled{ opacity:0.5; cursor:default; }
+  .mini-form-submit:hover:not(:disabled){ background:var(--forest-800); }
+
+  /* ---------- side panel ---------- */
+  .panel{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .card{
+    background:var(--paper-raise);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:20px 22px;
+    box-shadow:var(--shadow);
+  }
+  .card h3{
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+    margin:0 0 14px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .empty-state{
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+
+  .listing-preview .lp-title{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:600;
+    margin:0 0 6px;
+    color:var(--forest-900);
+  }
+  .listing-preview .lp-desc{
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--ink);
+    margin:0 0 10px;
+  }
+  .rate-band{
+    display:flex;
+    gap:10px;
+    margin-top:4px;
+  }
+  .rate-band .item{
+    flex:1;
+    text-align:center;
+    background:var(--paper);
+    border-radius:10px;
+    padding:10px 6px;
+  }
+  .rate-band .item.suggested{ background:var(--gold-soft); }
+  .rate-band .item .k{ font-size:10px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:.04em; }
+  .rate-band .item .v{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; margin-top:2px; }
+
+  .booking-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .booking-row:last-child{ border-bottom:none; }
+  .booking-status{
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:99px;
+    background:var(--sage-200);
+    color:var(--forest-800);
+    font-weight:600;
+  }
+
+  .feature-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px; }
+  .feature-list li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.5; color:var(--ink-soft); }
+  .feature-list .fi{
+    flex:none; width:22px;height:22px;border-radius:7px;
+    background:var(--sage-200); color:var(--forest-800);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px; margin-top:1px;
+  }
+  .feature-list b{ color:var(--ink); }
+
+  footer{
+    margin-top:34px;
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="brand-text">
+        <h1>StyZo</h1>
+        <p>Host Growth Toolkit — GeeksToCode × Wayzyy HostTech track</p>
+      </div>
+    </div>
+    <div class="proto-chip"><span class="dot"></span> Interactive prototype — chat replies are generated live</div>
+  </div>
+
+  <div class="hero-line">
+    <h2>One WhatsApp thread that writes the <em>listing</em>, suggests the <em>price</em>, and books the <em>guest</em>.</h2>
+    <p class="hero-sub">Try it below as a host would: ask for a listing, ask for a rate, or confirm a booking — no dashboard required.</p>
+  </div>
+
+  <div class="stage">
+
+    <!-- PHONE / CHAT -->
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="chat-head">
+          <div class="chat-avatar">S</div>
+          <div class="chat-head-text">
+            <b>Host Growth Toolkit</b>
+            <span id="statusline">online — replies in seconds</span>
+          </div>
+        </div>
+
+        <div class="chat-log" id="chatLog"></div>
+
+        <div class="quick-row" id="quickRow">
+          <button class="quick-btn" data-action="listing">📝 Write my listing</button>
+          <button class="quick-btn" data-action="pricing">💶 Suggest a price</button>
+          <button class="quick-btn" data-action="booking">📅 Confirm a booking</button>
+        </div>
+
+        <div class="chat-input">
+          <input id="textInput" type="text" placeholder="Type a message…" autocomplete="off">
+          <button class="send-btn" id="sendBtn" title="Send">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <div class="panel">
+      <div class="card">
+        <h3>Current listing</h3>
+        <div id="listingPanel" class="empty-state">Nothing generated yet — try “Write my listing” in the chat.</div>
+      </div>
+
+      <div class="card">
+        <h3>Pricing</h3>
+        <div id="pricingPanel" class="empty-state">No pricing suggestion yet — try “Suggest a price”.</div>
+      </div>
+
+      <div class="card">
+        <h3>Upcoming bookings</h3>
+        <div id="bookingPanel" class="empty-state">No bookings confirmed yet.</div>
+      </div>
+
+      <div class="card">
+        <h3>Why this exists</h3>
+        <ul class="feature-list">
+          <li><span class="fi">1</span><span><b>Underpriced.</b> Small hosts can't run nightly algorithmic pricing like big operators.</span></li>
+          <li><span class="fi">2</span><span><b>Invisible.</b> Weak titles and photos bury good listings in search.</span></li>
+          <li><span class="fi">3</span><span><b>Outsourced.</b> Pricing tools exist, but live behind dashboards hosts never learn.</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Prototype for the GeeksToCode hackathon, Wayzyy HostTech track — Ishita I S · Mohammed Hamza · Raihaan Ahmed · Shivasri S · Yashaswini S</footer>
+</div>
+
+<script>
+(function(){
+  const chatLog = document.getElementById('chatLog');
+  const textInput = document.getElementById('textInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const quickRow = document.getElementById('quickRow');
+  const statusline = document.getElementById('statusline');
+
+  const listingPanel = document.getElementById('listingPanel');
+  const pricingPanel = document.getElementById('pricingPanel');
+  const bookingPanel = document.getElementById('bookingPanel');
+
+  let sampleFn = null;
+  let sampleReady = false;
+
+  const state = {
+    listing: null,   // {title, description, flags:[{text,warn}]}
+    pricing: null,   // {currency, weekday, weekend, suggested, rationale}
+    bookings: []      // [{date, guest, status}]
+  };
+
+  // ---------- capability setup ----------
+  async function initCapability(){
+    try{
+      if (window.claude && typeof window.claude.use === 'function'){
+        const s = await window.claude.use('sample');
+        if (s){ sampleFn = s; sampleReady = true; statusline.textContent = 'online — replies in seconds'; return; }
+      }
+    }catch(e){ /* fall through to offline mode */ }
+    sampleReady = false;
+    statusline.textContent = 'demo mode — using built-in sample replies';
+  }
+  initCapability();
+
+  // ---------- chat rendering ----------
+  function scrollToBottom(){ chatLog.scrollTop = chatLog.scrollHeight + 200; }
+
+  function addBubble(role, html){
+    const row = document.createElement('div');
+    row.className = 'bubble-row ' + role;
+    const b = document.createElement('div');
+    b.className = 'bubble ' + role;
+    b.innerHTML = html;
+    row.appendChild(b);
+    chatLog.appendChild(row);
+    scrollToBottom();
+    return b;
+  }
+
+  function addTyping(){
+    const row = document.createElement('div');
+    row.className = 'bubble-row bot';
+    row.id = 'typingRow';
+    row.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    chatLog.appendChild(row);
+    scrollToBottom();
+  }
+  function removeTyping(){
+    const t = document.getElementById('typingRow');
+    if (t) t.remove();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- quick actions -> inline forms ----------
+  function disableQuickRow(disabled){
+    quickRow.querySelectorAll('button').forEach(b => b.disabled = disabled);
+  }
+
+  quickRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quick-btn');
+    if (!btn || btn.disabled) return;
+    const action = btn.dataset.action;
+    if (action === 'listing') openListingForm();
+    if (action === 'pricing') openPricingForm();
+    if (action === 'booking') openBookingForm();
+  });
+
+  sendBtn.addEventListener('click', sendFreeText);
+  textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendFreeText(); });
+
+  function sendFreeText(){
+    const val = textInput.value.trim();
+    if (!val) return;
+    addBubble('user', escapeHtml(val));
+    textInput.value = '';
+    const low = val.toLowerCase();
+    if (low.includes('listing') || low.includes('photo')){
+      setTimeout(openListingForm, 250);
+    } else if (low.includes('price') || low.includes('pricing') || low.includes('rate')){
+      setTimeout(openPricingForm, 250);
+    } else if (low.includes('book') || low.includes('confirm') || low.includes('block')){
+      setTimeout(openBookingForm, 250);
+    } else {
+      setTimeout(() => {
+        addBubble('bot', "I can help with three things — try one of the buttons below, or just tell me: <b>write my listing</b>, <b>suggest a price</b>, or <b>confirm a booking</b>.");
+      }, 350);
+    }
+  }
+
+  // ---------- LISTING FLOW ----------
+  function openListingForm(){
+    disableQuickRow(true);
+    const html = `
+      <div class="b-title">Let's write your listing</div>
+      A few basics and I'll draft a title, description and flag any photo gaps.
+      <div class="mini-form" id="listingForm">
+        <label>Property type &amp; area</label>
+        <input type="text" id="lf-place" placeholder="e.g. 2-bed flat, Lakeview district">
+        <label>Key features (comma separated)</label>
+        <textarea id="lf-features" placeholder="e.g. balcony, sea view, fast wifi, near metro, self check-in"></textarea>
+        <label>Photos you have (describe briefly)</label>
+        <input type="text" id="lf-photos" placeholder="e.g. 4 daytime living room photos, 1 blurry bathroom shot">
+        <button class="mini-form-submit" id="lf-submit">Generate listing</button>
+      </div>`;
+    addBubble('bot', html);
+    document.getElementById('lf-submit').addEventListener('click', submitListingForm);
+  }
+
+  async function submitListingForm(){
+    const place = document.getElementById('lf-place').value.trim() || 'a cosy independent stay';
+    const features = document.getElementById('lf-features').value.trim() || 'comfortable, well-located';
+    const photos = document.getElementById('lf-photos').value.trim() || 'a handful of photos, quality unknown';
+    document.getElementById('lf-submit').disabled = true;
+
+    addBubble('user', `${escapeHtml(place)}\nFeatures: ${escapeHtml(features)}\nPhotos: ${escapeHtml(photos)}`);
+    addTyping();
+
+    const result = await generateListing(place, features, photos);
+    removeTyping();
+    renderListingReply(result);
+    state.listing = result;
+    renderListingPanel();
+    disableQuickRow(false);
+  }
+
+  async function generateListing(place, features, photos){
+    if (sampleReady){
+      try{
+        const prompt = `You are the listing-writing engine inside "StyZo", a WhatsApp-first tool that writes short-stay listings for small independent hosts (not professional agencies).
+Given these host inputs, write ONE JSON object, nothing else, matching exactly:
+{"title": string (max 65 chars, no emoji, specific and honest), "description": string (2-3 short sentences, warm but plain, no purple prose, written for a booking site), "flags": [ {"text": string (max 6 words), "warn": boolean} ] }
+"flags" should be 2-4 short photo/listing-quality notes based on what the host described (e.g. missing exterior shot, needs daytime photo, good coverage). Mark flags "warn": true only if they point out something missing or weak.
+Host inputs — property/area: "${place}". Features: "${features}". Photos on hand: "${photos}".
+Respond with ONLY the JSON object.`;
+        const out = await sampleFn.json(prompt, { modelTier: 'quick' });
+        if (out && out.title) return out;
+      }catch(e){ /* fall back below */ }
+    }
+    // offline / fallback demo content
+    return {
+      title: `${place.split(',')[0]} — bright stay near ${place.split(',')[1] ? place.split(',')[1].trim() : 'the centre'}`.slice(0,65),
+      description: `A comfortable stay in ${place}. Highlights include ${features}. Great for guests who want a local, no-fuss base.`,
+      flags: [
+        { text: 'add one bright exterior photo', warn: true },
+        { text: 'good living-room coverage', warn: false },
+        { text: 'retake bathroom in daylight', warn: true }
+      ]
+    };
+  }
+
+  function renderListingReply(r){
+    const flagsHtml = (r.flags||[]).map(f => `<span class="flag ${f.warn ? 'warn' : ''}">${escapeHtml(f.text)}</span>`).join('');
+    addBubble('bot', `
+      <div class="b-title">${escapeHtml(r.title)}</div>
+      ${escapeHtml(r.description)}
+      <div class="flags">${flagsHtml}</div>
+    `);
+  }
+
+  function renderListingPanel(){
+    if (!state.listing){ listingPanel.innerHTML = 'Nothing generated yet.'; return; }
+    const r = state.listing;
+    const flagsHtml = (r.flags||[]).map(f => `<span class="flag ${f.warn ? 'warn' : ''}">${escapeHtml(f.text)}</span>`).join('');
+    listingPanel.innerHTML = `
+      <div class="listing-preview">
+        <div class="lp-title">${escapeHtml(r.title)}</div>
+        <div class="lp-desc">${escapeHtml(r.description)}</div>
+        <div class="flags">${flagsHtml}</div>
+      </div>`;
+    listingPanel.classList.remove('empty-state');
+  }
+
+  // ---------- PRICING FLOW ----------
+  function openPricingForm(){
+    disableQuickRow(true);
+    const html = `
+      <div class="b-title">Let's price your stay</div>
+      Tell me the city and dates and I'll suggest weekday/weekend rates.
+      <div class="mini-form" id="pricingForm">
+        <label>City / area</label>
+        <input type="text" id="pf-city" placeholder="e.g. Lisbon, Alfama">
+        <div class="row2">
+          <div><label>Check-in</label><input type="date" id="pf-in"></div>
+          <div><label>Check-out</label><input type="date" id="pf-out"></div>
+        </div>
+        <label>Currency</label>
+        <select id="pf-currency">
+          <option value="€">€ EUR</option>
+          <option value="$">$ USD</option>
+          <option value="₹">₹ INR</option>
+          <option value="£">£ GBP</option>
+        </select>
+        <button class="mini-form-submit" id="pf-submit">Suggest price</button>
+      </div>`;
+    addBubble('bot', html);
+    document.getElementById('pf-submit').addEventListener('click', submitPricingForm);
+  }
+
+  async function submitPricingForm(){
+    const city = document.getElementById('pf-city').value.trim() || 'your area';
+    const checkin = document.getElementById('pf-in').value;
+    const checkout = document.getElementById('pf-out').value;
+    const currency = document.getElementById('pf-currency').value;
+    document.getElementById('pf-submit').disabled = true;
+
+    const dateStr = (checkin && checkout) ? `${checkin} → ${checkout}` : 'flexible dates';
+    addBubble('user', `${escapeHtml(city)}\n${escapeHtml(dateStr)}`);
+    addTyping();
+
+    const result = await generatePricing(city, checkin, checkout, currency);
+    removeTyping();
+    renderPricingReply(result);
+    state.pricing = result;
+    renderPricingPanel();
+    disableQuickRow(false);
+  }
+
+  async function generatePricing(city, checkin, checkout, currency){
+    if (sampleReady){
+      try{
+        const prompt = `You are the pricing engine inside "StyZo", a WhatsApp-first tool that gives small independent short-stay hosts a simple, defensible starting price — NOT a real-time market data feed. Be a sensible, conservative estimator using general reasoning about the area, season and any nearby events you're aware of, and be explicit this is a starting estimate for the host to adjust.
+Return ONE JSON object, nothing else, matching exactly:
+{"weekday": number, "weekend": number, "suggested": number, "rationale": string (max 220 chars, plain language, mention season/day-of-week/any relevant local factor, and note it's a starting estimate)}
+All numbers are nightly rates in the same currency, no symbol, no thousands separator, realistic for a modest independent host (not a luxury property).
+Inputs — city/area: "${city}". Check-in: "${checkin || 'unspecified'}". Check-out: "${checkout || 'unspecified'}".
+Respond with ONLY the JSON object.`;
+        const out = await sampleFn.json(prompt, { modelTier: 'quick' });
+        if (out && typeof out.weekday === 'number') return { ...out, currency };
+      }catch(e){ /* fall back below */ }
+    }
+    return {
+      currency, weekday: 59, weekend: 74, suggested: 68,
+      rationale: `Estimate for ${city}: weekday base with a weekend lift. Adjust for local events once connected to real market data.`
+    };
+  }
+
+  function renderPricingReply(r){
+    addBubble('bot', `
+      <div class="b-title">Pricing suggestion</div>
+      ${escapeHtml(r.rationale)}
+      <div class="rate-cards">
+        <div class="rate-card"><div class="rlabel">Weekday</div><div class="rval">${r.currency}${r.weekday}</div></div>
+        <div class="rate-card"><div class="rlabel">Weekend</div><div class="rval">${r.currency}${r.weekend}</div></div>
+        <div class="rate-card suggested"><div class="rlabel">→ Suggested</div><div class="rval">${r.currency}${r.suggested}</div></div>
+      </div>
+    `);
+  }
+
+  function renderPricingPanel(){
+    if (!state.pricing){ pricingPanel.innerHTML = 'No pricing suggestion yet.'; return; }
+    const r = state.pricing;
+    pricingPanel.innerHTML = `
+      <div class="rate-band">
+        <div class="item"><div class="k">Weekday</div><div class="v">${r.currency}${r.weekday}</div></div>
+        <div class="item"><div class="k">Weekend</div><div class="v">${r.currency}${r.weekend}</div></div>
+        <div class="item suggested"><div class="k">Suggested</div><div class="v">${r.currency}${r.suggested}</div></div>
+      </div>
+      <p class="empty-state" style="margin-top:10px;">${escapeHtml(r.rationale)}</p>
+    `;
+    pricingPanel.classList.remove('empty-state');
+  }
+
+  // ---------- BOOKING FLOW ----------
+  function openBookingForm(){
+    disableQuickRow(true);
+    const html = `
+      <div class="b-title">Confirm a booking</div>
+      Which date, and for whom?
+      <div class="mini-form" id="bookingForm">
+        <label>Date</label>
+        <input type="date" id="bf-date">
+        <label>Guest name</label>
+        <input type="text" id="bf-guest" placeholder="e.g. Marta R.">
+        <button class="mini-form-submit" id="bf-submit">Confirm booking</button>
+      </div>`;
+    addBubble('bot', html);
+    document.getElementById('bf-submit').addEventListener('click', submitBookingForm);
+  }
+
+  function submitBookingForm(){
+    const dateEl = document.getElementById('bf-date');
+    const guestEl = document.getElementById('bf-guest');
+    const date = dateEl.value;
+    const guest = guestEl.value.trim() || 'Guest';
+    if (!date){ dateEl.style.borderColor = 'var(--coral)'; return; }
+    document.getElementById('bf-submit').disabled = true;
+
+    addBubble('user', `Book ${date}. Confirm it please.\nGuest: ${escapeHtml(guest)}`);
+    addTyping();
+
+    setTimeout(() => {
+      removeTyping();
+      state.bookings.push({ date, guest, status: 'Confirmed' });
+      addBubble('bot', `<div class="b-title">Booked ✅</div>${escapeHtml(date)} is now blocked for ${escapeHtml(guest)}. I'll message the guest a confirmation and hold the date on your calendar.`);
+      renderBookingPanel();
+      disableQuickRow(false);
+    }, 700);
+  }
+
+  function renderBookingPanel(){
+    if (!state.bookings.length){ bookingPanel.innerHTML = 'No bookings confirmed yet.'; return; }
+    bookingPanel.classList.remove('empty-state');
+    bookingPanel.innerHTML = state.bookings
+      .slice().reverse()
+      .map(b => `<div class="booking-row"><span>${escapeHtml(b.date)} — ${escapeHtml(b.guest)}</span><span class="booking-status">${escapeHtml(b.status)}</span></div>`)
+      .join('');
+  }
+
+  // ---------- opening message ----------
+  addBubble('bot', `<div class="b-title">Hi, I'm your Host Growth Toolkit 👋</div>Send me your property details for a listing, ask for a price, or confirm a booking — all here in chat.`);
+})();
+</script>
+
+</body>
+</html>

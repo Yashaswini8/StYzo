@@ -1,0 +1,27 @@
+{
+  "name": "styzo",
+  "version": "1.0.0",
+  "description": "StyZo — a WhatsApp-based host assistant. Hosts message a WhatsApp number and get AI-generated listings, pricing estimates, and booking confirmations.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "twilio",
+    "whatsapp",
+    "openai",
+    "vacation-rental",
+    "host-assistant"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.4.0",
+    "twilio": "^5.3.2"
+  }
+}

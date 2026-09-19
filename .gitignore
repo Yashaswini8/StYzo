@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets — never commit real keys
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Error output files
+*.err
+
+# Runtime data (per-user welcome keys) — never commit
+data/
+
+# Local test artifacts
+test-photo.jpg
+# Vercel CLI
+.vercel/
+.vercel
