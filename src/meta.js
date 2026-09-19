@@ -1,6 +1,6 @@
 // Meta WhatsApp Cloud API adapter — inbound webhook parsing + outbound
 // messaging via the Graph API. It reuses the exact same response brain as
-// the Twilio/demo path (classifier, Gemini listings, rule-based pricing,
+// any other transport (classifier, Gemini listings, rule-based pricing,
 // in-memory bookings, welcome-once), so replies are identical regardless of
 // which platform a message arrives through. Works generically for ANY sender.
 const { generateResponse } = require('./webhook');

@@ -2,7 +2,7 @@
 # this repository to Render (New -> Blueprint) or via the dashboard.
 #
 # The `sync: false` env vars are prompted for at deploy time — fill them
-# in with your real Twilio / Gemini credentials.
+# in with your real Meta WhatsApp Cloud API / Gemini credentials.
 services:
   - type: web
     name: styzo
@@ -10,17 +10,15 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: npm start
-    healthCheckPath: /
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
       - key: PORT
         value: 3000
-      - key: TWILIO_ACCOUNT_SID
+      - key: META_PHONE_NUMBER_ID
         sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_NUMBER
+      - key: META_ACCESS_TOKEN
         sync: false
       - key: GEMINI_API_KEY
         sync: false

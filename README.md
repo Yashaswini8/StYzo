@@ -1,268 +1,158 @@
-# StyZo — WhatsApp Host Assistant
+# StyZo — WhatsApp Host Assistant (Meta WhatsApp Cloud API)
 
 StyZo is a backend server that lets short-stay property hosts message a WhatsApp
 number and automatically get:
 
-- **🏠 AI-generated listings** (title + description) via Google Gemini
-- **💰 Pricing suggestions** via simple rule-based logic (no AI)
+- **🏠 AI-generated listings** (title + description) via Google Gemini — text or photo-based
+- **💰 Pricing suggestions** via simple rule-based logic (no AI), currency-aware per city
 - **📅 Booking confirmations / blocked dates** stored in memory
+- **🎙️ Voice notes** — downloaded and transcribed, then answered like text
 
-It ties together Twilio's WhatsApp API and Google's Gemini API. Built with **Node.js + Express**.
+It runs on **Meta's WhatsApp Cloud API** (Facebook Graph API, v25.0) and Google
+Gemini. Built with **Node.js + Express**. No SMS provider or third-party Twilio
+account is required.
 
 ---
 
 ## How it works
 
-1. A host sends a WhatsApp message to your Twilio number.
-2. Twilio POSTs the message to the server's `/webhook` endpoint.
-3. StyZo classifies the message into one of four request types:
+1. A host sends a WhatsApp message to your Meta WhatsApp Business number.
+2. Meta POSTs the message to the server's `/webhook` endpoint as JSON.
+3. StyZo extracts the first message (text, photo, or voice note), downloads any
+   media via the Graph API, transcribes voice notes, then classifies the text:
 
 | Request type | Trigger | Example |
 | --- | --- | --- |
 | `listing` | Photos attached, or property details | _"Create a listing for my 2-bed apartment at 12 Ocean Drive"_ (+ photos) |
 | `pricing` | A city name + dates | _"What's the price in Barcelona on July 10-12?"_ |
 | `booking` | A confirm/block action + a date | _"Confirm July 15"_ or _"Block August 5-7"_ |
-| `help` | Anything unrecognised | _"hello"_ |
+| `chat` | Anything unrecognised | A friendly Gemini answer |
 
 4. The matching handler runs, a reply is drafted, and StyZo sends it back to the
-   same WhatsApp number via Twilio's Messages API.
+   same WhatsApp number through the **WhatsApp Cloud API**.
+
+> Every phone number is handled generically — no sender whitelist in the code.
+> (Meta's dev-mode "allowed recipient list" still applies until your app is
+> approved for production messaging.)
 
 ### Project layout
 
 ```
 styzo/
 ├── src/
-│   ├── server.js       # Express app + entry point
-│   ├── webhook.js      # POST /webhook handler; routes messages to the right logic
-│   ├── classifier.js   # Message routing (listing / pricing / booking / help)
-│   ├── listing.js      # Gemini-powered listing generation
+│   ├── server.js       # Express app + entry point (webhook, /landing, /demo)
+│   ├── meta.js         # Meta webhook parsing, media download, Graph outbound
+│   ├── webhook.js      # Shared response brain (classify + build replies)
+│   ├── classifier.js   # Message routing (listing / pricing / booking / chat / help)
+│   ├── listing.js      # Gemini-powered listing generation + voice transcription
 │   ├── pricing.js      # Rule-based pricing estimator
+│   ├── currencies.js   # Per-city currency + symbol table
 │   ├── bookings.js     # In-memory booking store
-│   ├── twilio.js       # Outbound WhatsApp replies
 │   ├── dates.js        # Free-text date/range parsing
-│   ├── events.js       # Hardcoded sample local events (demo data)
+│   ├── events.js       # City-aware sample local events (demo data)
 │   └── config.js       # Reads every secret from the environment
-├── render.yaml         # Render blueprint (optional, dashboard works too)
-├── .env.example        # Copy to .env and fill in
-└── package.json
+├── public/
+│   ├── landing.html    # Public landing page (Chat with StyZo, Try Live Demo)
+│   └── styzo-prototype.html  # Interactive demo prototype
+├── vercel.json         # Vercel serverless deployment config
+├── render.yaml         # Render blueprint (optional alternative host)
+└── .env.example        # Template for your environment variables
 ```
-
-### Pricing rules (demo values, all configurable in `.env`)
-
-- **Base rate:** `BASE_PRICE` (default `100` / night)
-- **Weekend bump:** `WEEKEND_SURCHARGE` (default `25`) added on Fri/Sat nights
-- **Event bump:** extra `bumpPercent %` of the base rate on nights matching an
-  event in `src/events.js` (e.g. Barcelona Marathon → +35%)
-
-> Events are a hardcoded sample list for demo purposes only.
-
-**Bookings** live in an in-memory `Map`, so data resets on restart — swap in
-SQLite/Postgres when you need persistence.
 
 ---
 
-## Local development
+## Setup
 
 ### 1. Prerequisites
 
-- Node.js 18+
-- A [Twilio account](https://www.twilio.com/try-twilio)
-- A [Google Gemini API key](https://aistudio.google.com/apikey) — free tier
+- [Meta developer account](https://developers.facebook.com) with a Meta app
+- A **WhatsApp Business** number set up in the app's WhatsApp → API Setup, with
+  a test recipient added to the allowed list
+- A [Google Gemini](https://aistudio.google.com/apikey) API key (free tier works)
+- [Node.js](https://nodejs.org) 18+ — this repo uses built-in `fetch`, no SDKs
 
-### 2. Install & configure
+### 2. Configure
 
 ```bash
-cd styzo
-npm install
-cp .env.example .env    # then fill in your real keys
+cp .env.example .env
 ```
 
-`.env` needs at least:
-
-```env
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886   # Twilio WhatsApp sandbox number in dev
-GEMINI_API_KEY=your-gemini-api-key
-```
+Set `META_PHONE_NUMBER_ID` (Graph node id from WhatsApp → API Setup) and
+`META_ACCESS_TOKEN` (the temporary token shown there expires ~24h — swap it for
+a permanent/system-user token before going public). Add your `GEMINI_API_KEY`.
 
 ### 3. Run locally
 
 ```bash
-npm start        # or npm run dev for auto-reload
+npm install
+npm start        # http://localhost:3000
 ```
 
-Health check: http://localhost:3000/
+### 4. Receive live messages
 
-### 4. Test with ngrok so Twilio can reach you
+Expose your local server so Meta can reach the webhook:
 
 ```bash
-ngrok http 3000
+npx ngrok http 3000
 ```
 
-Twilio can only call a public URL, so forward your local port:
+Then in the Meta app dashboard → WhatsApp → **API Setup → Edit webhook
+subscription**:
 
-1. Copy the `https://xxxx.ngrok.io` URL.
-2. In the [Twilio Console → Messaging → Try it out → WhatsApp Sandbox](https://console.twilio.com/us1/develop/sms/try-it-out/whatsapp):
-   - Set **When a message comes in** to `https://xxxx.ngrok.io/webhook`
-   - Method: **HTTP POST**.
-3. Message your sandbox number from WhatsApp and try:
-
-```
-What's the price in Barcelona on 15-17 Nov 2026?
-```
-
-You should get a quote back with the weekend + event bump breakdown.
+- **Callback URL:** `https://<your-ngrok-or-deployed-url>/webhook`
+- **Verify token:** `hackathon2026verify`
+- Subscribe to the **`messages`** field.
 
 ---
 
-## Twilio WhatsApp Sandbox setup (exact steps)
+## Env vars
 
-StyZo works with **Twilio's WhatsApp Sandbox** (the "you're all set!
-Happy texting!" grey/green sandbox screen) — not Meta's Cloud API. Twilio is
-the WhatsApp provider, so this is the only webhook the server talks to.
+| Variable | Required | Description |
+| --- | --- | --- |
+| `META_PHONE_NUMBER_ID` | yes | Graph node id of your WhatsApp Business number |
+| `META_ACCESS_TOKEN` | yes | Meta access token (temporary or system-user) |
+| `GEMINI_API_KEY` | yes | Google AI Studio key for listing generation |
+| `GEMINI_MODEL` | no | Defaults to `gemini-3.6-flash` (fallbacks: `gemini-3-flash-preview`, `gemini-3.5-flash`) |
+| `BASE_PRICE` | no | Base nightly rate (default 100) |
+| `WEEKEND_SURCHARGE` | no | Extra per Fri/Sat night (default 25) |
+| `PRICING_CURRENCY` | no | Fallback currency code (default USD) |
+| `DEFAULT_CITY` | no | Fallback city for date-only pricing queries |
+| `PORT` | no | Default 3000 |
 
-### What the sandbox sends you
+---
 
-When a message arrives, Twilio POSTs it to your configured webhook as
-`application/x-www-form-urlencoded` data:
+## Deploy
 
+### Vercel (primary)
+
+The repo ships with `vercel.json` — deploy the whole backend (webhook + landing
++ demo) as a single serverless function:
+
+```bash
+vercel --prod
 ```
-Body            the message text
-From            the sender, e.g. "whatsapp:+15551234567"
-NumMedia        number of attached media items (0 if none)
-MediaUrl0       public URL of the first photo
-MediaContentType0   MIME type of the first photo, e.g. "image/jpeg"
-MediaUrl1, MediaContentType1, ...   any additional photos
-```
 
-`src/webhook.js` reads exactly these fields (`Body`, `From`, `NumMedia`,
-`MediaUrl…`, `MediaContentType…`) and collects them into a `media` array that
-feeds the listing generator. The webhook replies to Twilio with HTTP 200 right
-away, then answers the host asynchronously through the Twilio Messages API.
+Then set the same env vars in the Vercel project, push public, and point the
+Meta webhook callback URL at `https://<your-project>.vercel.app/webhook`.
 
-### Step-by-step
+### Render (optional)
 
-1. **Get your sandbox credentials**
-   - Open the [Twilio Console → Messaging → Try it out → WhatsApp Sandbox](https://console.twilio.com/us1/develop/sms/try-it-out/whatsapp).
-   - Note the sandbox number — it is **`whatsapp:+14155238886`** for every
-     account (your *Assign a number* dropdown stays as this default in sandbox).
-   - Your **Account SID** (`AC…`) and **Auth Token** sit in your account
-     settings / API keys page.
-
-2. **Put them in `.env`**
-
-   ```env
-   TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   TWILIO_AUTH_TOKEN=your_auth_token
-   TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-   ```
-
-    > `src/twilio.js` strips/adds the `whatsapp:` prefix automatically, so it
-    > works whether you write `whatsapp:+14155238886` or `+14155238886`.
-
-3. **Join the sandbox from your phone**
-   - From WhatsApp, send the magic join code shown on the Sandbox page
-     (e.g. `join lover-icecream`) to `whatsapp:+14155238886`.
-   - Twilio replies "You are all set" — you're now a member of the sandbox and
-     can message it.
-
-4. **Run StyZo + ngrok**
-
-   ```bash
-   npm start          # terminal 1 — server on http://localhost:3000
-   ngrok http 3000    # terminal 2 — public tunnel, copy the https://...ngrok.io URL
-   ```
-
-5. **Point "WHEN A MESSAGE COMES IN" at the server**
-   - In the Sandbox console, find **"Sandbox Settings"** (button next to
-     *Assign a number*).
-   - Set **When a message comes in** to:
-     ```
-     https://<your-ngrok-subdomain>.ngrok.io/webhook
-     ```
-   - Set the **HTTP method** dropdown to **`HTTP POST`**.
-   - Click **Save**.
-
-6. **Test it**
-   - Send photos of a property plus a description:
-     - message your sandbox number from WhatsApp: *"Create a listing for my
-       sunny 2-bed apartment, old town, 3 nights from €90"* with 2 photos attached
-     - StyZo should answer with an AI title + description and a note describing
-       the 2 photos it received.
-   - Try pricing: *"What's the price in Barcelona on 15-17 Nov 2026?"*
-   - Try booking: *"Confirm December 20-22"* then the same again for a conflict.
-
-> **Sandbox limits to know**
-> - Sandbox participants expire after 3 days — re-send the `join` code to renew.
-> - Media URLs produced by the sandbox expire after a while; for this demo we
->   only count them, so that's fine.
-
-### Production WhatsApp later
-
-When you outgrow the sandbox, apply for a WhatsApp Business profile in the
-Twilio Console and set `TWILIO_WHATSAPP_NUMBER` to that real number. Nothing
-else in StyZo changes — the webhook format (Body/From/NumMedia/MediaUrl…) is
-identical.
+The included `render.yaml` blueprint works too — connect the repo and fill in
+the `sync: false` (secret) variables when prompted.
 
 ---
 
-## Deploying to Render
+## API surface
 
-Two equivalent options — pick one.
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/webhook` | GET | Meta verification handshake (returns the challenge) |
+| `/webhook` | POST | Meta inbound message (ACKs with `EVENT_RECEIVED`, then processes) |
+| `/landing` | GET | Public landing page |
+| `/demo` | GET | Interactive prototype |
+| `/` | GET | Public landing page |
+| `/health` | GET | Health check JSON |
 
-### Option A: Render Blueprint (recommended)
-
-The repo includes `render.yaml`. If you already have a GitHub repo:
-
-1. Push this folder to a new GitHub repository.
-2. Go to [render.com](https://render.com) → **New → Blueprint** → connect the repo.
-3. Render will prompt you for the `sync: false` variables (your Twilio & Gemini
-   credentials). Fill them in and deploy.
-
-### Option B: Manual Web Service
-
-1. Push the code to a GitHub repo.
-2. [render.com](https://render.com) → **New → Web Service** → connect the repo.
-3. Settings:
-   - **Runtime:** Node
-   - **Build command:** `npm install`
-   - **Start command:** `npm start`
-4. Under **Environment**, add:
-   - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`, `GEMINI_API_KEY`
-   - (optional) `GEMINI_MODEL`, `BASE_PRICE`, `WEEKEND_SURCHARGE`, `DEFAULT_CITY`
-5. Deploy. Render gives you a URL like `https://styzo.onrender.com`.
-6. Point your Twilio WhatsApp webhook at `https://styzo.onrender.com/webhook`
-   (method: **HTTP POST**) — exactly like the ngrok step above.
-
-> **Free-tier note:** Render's free service sleeps after inactivity; the first
-> inbound message may take ~30s to wake it up. Your Twilio reply may be delayed
-> until then. Upgrade to a paid plan or add a health-check ping if that matters.
-
-### Deploying to Railway
-
-Near-identical: new project → deploy from GitHub → set the same environment
-variables → add the public URL as your Twilio webhook.
-
----
-
-## Example messages
-
-| You send | What you get back |
-| --- | --- |
-| _"Create a listing for a sunny 2-bed apartment in old town"_ (+ 2 photos) | AI draft: title + description + photo note |
-| _"What's the price in Barcelona on 15-17 Nov 2026?"_ | Rule-based quote with weekend/event breakdown |
-| _"Confirm December 20-22"_ | Booking confirmation (stored in memory) |
-| _"Block January 5"_ | Date blocked |
-| _"Confirm December 20-22"_ again | Conflict warning — dates already taken |
-
----
-
-## Notes & scope
-
-- **Photo analysis is out of scope**: attached photos are counted and mentioned,
-  but not actually analysed.
-- **Pricing is rule-based, not AI** (weekend + hardcoded event bumps).
-- **Bookings are in-memory** — they do not survive a server restart.
-- The webhook responds to Twilio with `HTTP 200` immediately, then sends the
-  reply asynchronously, so slow AI calls never trigger Twilio retries.
+Meta uses Graph API **v25.0** for messaging and media (`GET /v25.0/{media_id}` →
+signed URL, downloaded with the access token in the header). Duplicate webhook
+posts (multiple apps subscribed to the same WABA) are de-duplicated by message id.

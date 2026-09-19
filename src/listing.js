@@ -43,7 +43,7 @@ async function askModel(model, parts, { json = false, temperature = 0.7 } = {}) 
 }
 
 // Summarise the attached media for the reply text. Real image analysis is out
-// of scope, but we surface the count and content types Twilio reported so it's
+// of scope, but we surface the count and content types to the model so it's
 // clear the photos arrived. Media URLs (media[].url) are kept for a future
 // version that actually analyses images.
 function buildPhotoNote(media = []) {

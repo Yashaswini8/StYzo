@@ -1,14 +1,10 @@
-// Webhook handler for Twilio's WhatsApp Sandbox "Message comes in" trigger.
-// Twilio POSTs the incoming message as URL-encoded form data:
-//   Body, From, NumMedia, and MediaUrl0 / MediaContentType0 (and so on).
-// We extract everything, classify it, ACK Twilio immediately with HTTP 200,
-// then send the reply asynchronously via the Twilio API (so slow work like
-// Gemini calls never makes Twilio retry the webhook).
+// Shared response brain for StyZo. meta.js extracts the inbound WhatsApp
+// message (text, photo, or voice note), then this module classifies it and
+// builds the reply — identical logic regardless of the transport.
 const { classify } = require('./classifier');
 const { generateListing, chatReply } = require('./listing');
 const { estimateQuote, formatQuote } = require('./pricing');
 const { bookRange, formatBookingResult } = require('./bookings');
-const { sendWhatsApp } = require('./twilio');
 
 const HELP_PHRASES = [
   "Hi! I'm StyZo, your host assistant. I can help with:",
@@ -63,28 +59,6 @@ function markWelcomed(user) {
   } catch (err) {
     console.error('Could not persist welcomed-users store:', err.message);
   }
-}
-
-function safeSend(to, body) {
-  return sendWhatsApp(to, body).catch((err) => {
-    console.error('Could not send reply:', err.message);
-  });
-}
-
-// Read every attached media item out of Twilio's request format.
-// Twilio numbers them MediaUrl0, MediaUrl1, ... with a matching
-// MediaContentType0, MediaContentType1, ... per item.
-function extractMedia(reqBody) {
-  const count = parseInt(reqBody.NumMedia || '0', 10);
-  const media = [];
-  for (let i = 0; i < count; i += 1) {
-    media.push({
-      index: i,
-      url: String(reqBody[`MediaUrl${i}`] || '').trim(),
-      contentType: String(reqBody[`MediaContentType${i}`] || '').trim(),
-    });
-  }
-  return media;
 }
 
 async function buildListingReply({ body, mediaCount, media, images, action }) {
@@ -147,10 +121,10 @@ function buildBookingReply({ body, from, action }) {
 // ("make it shorter", "publish") is recognised as a listing follow-up.
 const lastTypeByUser = new Map();
 
-// Build the bot's reply for a message — shared by BOTH the Twilio webhook and
-// the local /demo chat UI, so the demo shows the exact same responses WhatsApp
-// would get. Returns { welcome, reply, type } where `welcome` is the
-// first-time greeting (null for returning users).
+// Build the bot's reply for a message — used by the Meta webhook so WhatsApp
+// and the deployed /demo show the exact same responses.
+// Returns { welcome, reply, type } where `welcome` is the first-time greeting
+// (null for returning users).
 async function generateResponse({ from, body, mediaCount, media = [], images = [] }) {
   let welcome = null;
   if (!welcomedUsers.has(from)) {
@@ -187,39 +161,4 @@ async function generateResponse({ from, body, mediaCount, media = [], images = [
   return { welcome, reply, type };
 }
 
-async function processMessage({ from, body, mediaCount, media }) {
-  const { welcome, reply, type } = await generateResponse({ from, body, mediaCount, media });
-
-  // Greet first-time users before their real answer. The welcome flag is set
-  // before sending so rapid-fire first messages only greet once.
-  if (welcome) {
-    console.log(`(${from}) [welcome] welcome message sent`);
-    await safeSend(from, welcome);
-  }
-
-  console.log(`(${from}) [${type}] "${body}"`);
-  await safeSend(from, reply);
-}
-
-// Express route handler. Responds to Twilio instantly, then processes in the
-// background so a slow Gemini call never stalls the webhook response.
-function handleIncoming(req, res) {
-  const from = String(req.body.From || '').trim();
-  const body = String(req.body.Body || '').trim();
-  const mediaCount = parseInt(req.body.NumMedia || '0', 10);
-  const media = extractMedia(req.body);
-
-  res.status(200).send('OK');
-
-  if (!from || !body) {
-    console.warn('Ignoring message with no From/Body');
-    return;
-  }
-
-  processMessage({ from, body, mediaCount, media }).catch(async (err) => {
-    console.error('Failed to process message:', err);
-    await safeSend(from, 'Something went wrong while processing your message. Please try again.');
-  });
-}
-
-module.exports = { handleIncoming, processMessage, generateResponse };
+module.exports = { generateResponse };
